@@ -117,7 +117,7 @@ defmodule DemoWeb.SnakeLive do
       max_length: @snake_length,
       tail: [{20, 20}],
       cherries: [],
-      url: "http://localhost:4000/test-namespace/streams/snake/events"
+      url: "http://localhost:4000/test-namespace/streams/snake/events?timeout=100"
     }
 
     new_socket =
