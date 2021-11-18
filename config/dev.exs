@@ -2,8 +2,6 @@ import Config
 
 # Configure your database
 config :demo, Demo.Repo,
-  username: "postgres",
-  password: "postgres",
   database: "demo_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,
@@ -18,7 +16,7 @@ config :demo, Demo.Repo,
 config :demo, DemoWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: 4000],
+  http: [ip: {127, 0, 0, 1}, port: 4001],
   debug_errors: true,
   code_reloader: true,
   check_origin: false,

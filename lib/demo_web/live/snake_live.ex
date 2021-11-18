@@ -116,7 +116,8 @@ defmodule DemoWeb.SnakeLive do
       col: 6,
       max_length: @snake_length,
       tail: [{1, 6}],
-      cherries: []
+      cherries: [],
+      url: "http://localhost:4000/test-namespace/streams/snake/events"
     }
 
     new_socket =
@@ -157,6 +158,7 @@ defmodule DemoWeb.SnakeLive do
       socket
       |> game_loop()
       |> compact_tail()
+      |> call_event_stream()
       |> schedule_tick()
 
     {:noreply, new_socket}
@@ -183,6 +185,18 @@ defmodule DemoWeb.SnakeLive do
   defp turn(socket, "ArrowUp"), do: go(socket, :up)
   defp turn(socket, "ArrowRight"), do: go(socket, :right)
   defp turn(socket, _), do: socket
+
+  def call_event_stream(socket) do
+    response = case HTTPoison.get(socket.assigns.url, [], [recv_timeout: 30000]) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        Jason.decode! body
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        IO.puts "Not found :("
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        IO.inspect reason
+    end
+    response["events"] |> Enum.reduce(socket, fn e,s -> turn(s, e["event_type"]) end) |> assign(:url, response["next_page"])
+  end
 
   defp go(socket, heading) do
     update(socket, :pending_headings, fn
