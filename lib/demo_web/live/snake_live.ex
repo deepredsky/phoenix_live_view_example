@@ -112,10 +112,10 @@ defmodule DemoWeb.SnakeLive do
       width: @width,
       compacted_tail: [],
       tick: @tick,
-      row: 1,
-      col: 6,
+      row: 20,
+      col: 20,
       max_length: @snake_length,
-      tail: [{1, 6}],
+      tail: [{20, 20}],
       cherries: [],
       url: "http://localhost:4000/test-namespace/streams/snake/events"
     }
@@ -156,12 +156,16 @@ defmodule DemoWeb.SnakeLive do
   def handle_info(:tick, socket) do
     new_socket =
       socket
-      |> game_loop()
-      |> compact_tail()
       |> call_event_stream()
       |> schedule_tick()
 
     {:noreply, new_socket}
+  end
+
+  def step(socket) do
+    socket
+    |> game_loop()
+    |> compact_tail()
   end
 
   defp update_tick(socket, tick) when tick <= 1000 and tick >= 50 do
@@ -202,7 +206,7 @@ defmodule DemoWeb.SnakeLive do
     update(socket, :pending_headings, fn
       {^heading, prev} -> {heading, prev}
       {_, prev} -> {heading, prev ++ [heading]}
-    end)
+    end) |> step
   end
 
   defp next_heading(socket) do
