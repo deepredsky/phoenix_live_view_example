@@ -9,6 +9,7 @@ defmodule DemoWeb.UserLive.Edit do
 
   def handle_params(%{"id" => id}, _url, socket) do
     user = Accounts.get_user!(id)
+
     {:noreply,
      assign(socket, %{
        user: user,

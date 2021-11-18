@@ -150,7 +150,24 @@ defmodule DemoWeb.SnakeLive do
   end
 
   def handle_event("keydown", %{"key" => key}, socket) do
-    {:noreply, turn(socket, key)}
+    url = "http://localhost:4000/test-namespace/streams/snake/events"
+
+    payload =
+      Jason.encode!(%{
+        "events" => [
+          %{
+            "event_id" => Ecto.UUID.generate(),
+            "event_type" => key,
+            "data" => %{},
+            "metadata" => %{}
+          }
+        ]
+      })
+
+    response = HTTPoison.post!(socket.assigns.url, payload, [{"Content-Type", "application/json"}])
+    IO.puts "Send #{key}"
+
+    {:noreply, socket}
   end
 
   def handle_info(:tick, socket) do
@@ -191,22 +208,29 @@ defmodule DemoWeb.SnakeLive do
   defp turn(socket, _), do: socket
 
   def call_event_stream(socket) do
-    response = case HTTPoison.get(socket.assigns.url, [], [recv_timeout: 30000]) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        Jason.decode! body
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        IO.puts "Not found :("
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        IO.inspect reason
-    end
-    response["events"] |> Enum.reduce(socket, fn e,s -> turn(s, e["event_type"]) end) |> assign(:url, response["next_page"])
+    response =
+      case HTTPoison.get(socket.assigns.url, [], recv_timeout: 30000) do
+        {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+          Jason.decode!(body)
+
+        {:ok, %HTTPoison.Response{status_code: 404}} ->
+          IO.puts("Not found :(")
+
+        {:error, %HTTPoison.Error{reason: reason}} ->
+          IO.inspect(reason)
+      end
+
+    response["events"]
+    |> Enum.reduce(socket, fn e, s -> turn(s, e["event_type"]) end)
+    |> assign(:url, response["next_page"])
   end
 
   defp go(socket, heading) do
     update(socket, :pending_headings, fn
       {^heading, prev} -> {heading, prev}
       {_, prev} -> {heading, prev ++ [heading]}
-    end) |> step
+    end)
+    |> step
   end
 
   defp next_heading(socket) do

@@ -11,6 +11,7 @@ defmodule DemoWeb.UserLive.PresenceIndex do
       Phoenix.PubSub.subscribe(Demo.PubSub, "users")
       Presence.track(self(), "users", name, %{})
     end
+
     {:ok, fetch(socket)}
   end
 
